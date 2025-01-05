@@ -1,0 +1,35 @@
+// miscellaneous.h
+// Eemeli Koivu 5.1.2025
+
+#pragma once
+#include <iostream>
+#include <string>
+
+int isFloat(std::string input) {// check if the input is a float
+	int numberOfPoints = 0;
+	for (const auto& ch : input) {
+		if (ch != '.') {
+			if (!isdigit(ch)) {
+				return 0;
+			}
+		}
+		else {
+			numberOfPoints++;
+		}
+	}
+	if (numberOfPoints > 1) {
+		return 0;
+	}
+	return 1;
+}
+
+void removeSpaces(std::string* exp) {// removes whitespaces from input
+	int i = 0;
+	char ch;
+	while (i < (*exp).size()) {
+		ch = (*exp)[i];
+		if (ch == ' ') { (*exp).erase((*exp).begin() + i); }
+		else { i++; }
+	}
+	return;
+}

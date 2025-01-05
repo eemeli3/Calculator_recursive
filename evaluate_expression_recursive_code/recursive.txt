@@ -1,0 +1,162 @@
+// recursive.h
+// Eemeli Koivu 5.1.2025
+
+#pragma once
+#include <iostream>
+#include <string>
+#include <math.h>
+#include "miscellaneous.h"
+
+
+bool isOperator(char ch) {// check ch is an operator
+	char operators[5] = { '+','-','*','/','^' };
+	for (char op : operators) {
+		if (op == ch) { return 1; }
+	}
+	return 0;
+}
+
+
+bool checkInput(std::string infix) {// check the input string is allowed
+	int flag = 0;
+	for (char ch : infix) {// check all paranthesis are in pairs
+		if (!(isOperator(ch) || isdigit(ch) || ch == '.' || ch == '(' || ch == ')')) { return 0; }// check input has alloweed charackters
+		switch (ch) {
+		case ('('):
+			flag++;
+			break;
+		case(')'):
+			flag--;
+			break;
+		}
+		if (flag < 0) { return 0; }
+	}
+	if (flag > 0) { return 0; }
+
+	for (int i = 0; i < infix.length() - 1; i++) {
+		if (infix[i] == '(' && (infix[i + 1] == ')' || isOperator(infix[i + 1]))) { return 0; }// check there are no empty paranthesis or expressions of the form "(*"
+		if (isOperator(infix[i]) && infix[i + 1] == ')') { return 0; }// check there are no expressions of the form "*)"
+		if (isOperator(infix[i]) && isOperator(infix[i + 1])) { return 0; }// check there are no expressions of the form "*/"
+	}
+
+	if (isOperator(infix[0]) || isOperator(infix[infix.length() - 1])) { return 0; }// check the first and last characters are not operators
+
+	return 1;
+}
+
+
+void addPairOfParanthesis(std::string* expr, int index) {// add paranthesis for the operator at index
+	if ((*expr)[index - 1] == ')') {// there is an open paranthesis on the left side
+		int numberOfOpenParanthesis = -1;
+		int j = index - 2;
+		while (numberOfOpenParanthesis != 0) {// find where the corresponding paranthesis is
+			if ((*expr)[j] == ')') { numberOfOpenParanthesis--; }
+			else if ((*expr)[j] == '(') { numberOfOpenParanthesis++; }
+			j--;
+		}
+		(*expr) = expr->substr(0, j + 1) + "(" + expr->substr(j + 1, expr->length());// add left paranthesis
+	}
+	else {// there is a number on the left side
+		int j = index - 1;
+		while (!(isdigit((*expr)[j]) || (*expr)[j] == '.')) {// find the start of the number
+			if (j == 0) { break; }
+			j--;
+		}
+		(*expr) = expr->substr(0, j) + "(" + expr->substr(j, expr->length());// add left paranthesis
+	}
+	if ((*expr)[index + 2] == '(') {// there is an open paranthesis on the right side
+		int numberOfOpenParanthesis = 1;
+		int j = index + 3;
+		while (numberOfOpenParanthesis != 0) {// find where the corresponding paranthesis is
+			if ((*expr)[j] == ')') { numberOfOpenParanthesis--; }
+			else if ((*expr)[j] == '(') { numberOfOpenParanthesis++; }
+			j++;
+		}
+		(*expr) = expr->substr(0, j) + ")" + expr->substr(j, expr->length());// add left paranthesis
+	}
+	else {// there is a number on the right side
+		int j = index + 2;
+		while (!(isdigit((*expr)[j]) || (*expr)[j] == '.')) {// find the start of the number
+			if (j == expr->length() - 1) { break; }
+			j++;
+		}
+		(*expr) = expr->substr(0, j+1) + ")" + expr->substr(j+1, expr->length());// add left paranthesis
+	}
+	return;
+}
+
+
+void addParanthesis(std::string* expr) {// adds paranthesis for all operators from left to right in order of precedence
+	int i = 0;
+	while (i < expr->length()) {// add paranthesis for "^"
+		if ((*expr)[i] == '^') {
+			addPairOfParanthesis(expr, i);
+			i = i + 2;
+		}
+		else { i++; }
+	}
+	i = 0;
+	while (i < expr->length()) {// add paranthesis for "*" and "/"
+		if ((*expr)[i] == '*' || (*expr)[i] == '/') {
+			addPairOfParanthesis(expr, i);
+			i = i + 2;
+		}
+		else { i++; }
+	}
+	i = 0;
+	while (i < expr->length()) {// add paranthesis for "+" and "-"
+		if ((*expr)[i] == '+' || (*expr)[i] == '-') {
+			addPairOfParanthesis(expr, i);
+			i = i + 2;
+		}
+		else { i++; }
+	}
+	return;
+}
+
+
+float evalRecursive(std::string expr) {// a recursive function for evaluating mathematical expressions
+	int NumberOfOpenParanthesis = 0;
+	char ch;
+	for (int i = 0; i < expr.size(); i++) {//Find an operator outside paranthesis. e.g. (expr1) + (expr2). If such an operator is found evaluate subexpressions.
+		ch = expr[i];
+		if (ch == '(') { NumberOfOpenParanthesis++; }
+		else if (ch == ')') { NumberOfOpenParanthesis--; }
+		else if (NumberOfOpenParanthesis == 0) {
+			switch (ch) {
+			case('+'):
+				return evalRecursive(expr.substr(0, i)) + evalRecursive(expr.substr(i + 1, expr.size()));
+				break;
+			case('-'):
+				return evalRecursive(expr.substr(0, i)) - evalRecursive(expr.substr(i + 1, expr.size()));
+				break;
+			case('*'):
+				return evalRecursive(expr.substr(0, i)) * evalRecursive(expr.substr(i + 1, expr.size()));
+				break;
+			case('/'):
+				return evalRecursive(expr.substr(0, i)) / evalRecursive(expr.substr(i + 1, expr.size()));
+				break;
+			case('^'):
+				return pow(evalRecursive(expr.substr(0, i)), evalRecursive(expr.substr(i + 1, expr.size())));
+				break;
+			}
+		}
+	}
+	if (expr[0] == '(') { return evalRecursive(expr.substr(1, expr.size() - 2)); } // if the expression is in paranthesis then evaluate expression inside the paranthesis
+	if (isFloat(expr)) { return stof(expr); }// return value as float if expression is a number
+	return NAN;// If none of above conditions apply the input is not a mathematical expression. Returns NAN.
+}
+
+
+float evalExprRecursive(std::string expr) {
+	removeSpaces(&expr);// remove whitespaces
+	if (!checkInput(expr)) {// check input is allowed
+		return NAN;
+	}
+	addParanthesis(&expr);// add parathesis for each operator
+	float value = evalRecursive(expr);// calculate value
+	if (isnan(value)) {
+		std::cout << "The input is not a mathematical expression.\n\n";
+	}
+	return value;
+}
