@@ -1,0 +1,23 @@
+// evalRecursiveuate_expression.cpp
+// Eemeli Koivu 5.1.2025
+
+#include <iostream>
+#include <string>
+#include <math.h>
+#include "recursive.h"
+
+using namespace std;
+
+int main()
+{
+	string expr;
+	while (1) {
+		cout << "Enter a mathematical expression. Enter \"n\" to stop.\nInput: ";
+		cin >> expr;
+		if (expr == "n") { break; }
+		float result = evalExprRecursive(expr);
+		if (isnan(result)) { cout << "The input is not an allowed expression.\n\n"; }
+		else { cout << "Result: " << result << "\n\n"; }
+	}
+	return 0;
+}
